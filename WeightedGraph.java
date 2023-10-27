@@ -1,7 +1,10 @@
+import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Stack;
+import java.util.List;
+import java.util.Map;
+//import java.util.Stack; (never used)
 
-import javax.swing.tree.TreeNode;
+//import javax.swing.tree.TreeNode; (never used)
 
 // NOTE: Courtesy of: https://tutorialhorizon.com/algorithms/weighted-graph-implementation-java/
 // The accompanying documentation and diagram and video on that site WILL be helpful
@@ -20,6 +23,7 @@ public class WeightedGraph {
 
 static class Graph {
   int vertices;
+  int distance;
   LinkedList<Edge> [] adjacencylist;
   Graph(int vertices) {
     this.vertices = vertices;
@@ -81,34 +85,81 @@ static class Graph {
     }
   }
 
+  //NOTE: Referenced from WilliamFiset on Youtube for shortestPaths
   public void printShortestPaths(){
     System.out.println("The Shortest Path from each node to every other node (except for itself) follow:");
-    //for each vertices
+    //THIS PORTION FOR SORTING AND CREATING DISTANCE ARRAY
+    Map<Integer, List<Edge>> graph = new HashMap<>();
     for (int i = 0; i < vertices; i++){
-      LinkedList<Edge> list = adjacencylist[i];
+      graph.put(i, adjacencylist[i]);
+    }
+
+    for (int i = 0; i < vertices; i++){
+      Integer[] dist = helper(graph, i, 6);
       //for each destination
       for (int j = 0; j < vertices; j++){
-        if (i == j) continue;
+        if (i == j) continue; // if it is comparing itself, move on
         System.out.print("The shortest path from " + i + " to " + j + " is: ");
-        if (DFS(i, 0, j, list) == true){
-          System.out.println("The length");
-        } else {
+        if (dist[j] == null){
           System.out.println("No path");
+        }else{
+          System.out.println(dist[j]);
         }
       }
     }
   }
+  //this helper function creates the distance arr for shortest path
+  //from starting node, get shortest distance to every node. null if not reachable
+  public static Integer[] helper(Map<Integer, List<Edge>> graph, int start, int vertices) {
 
-  //check if there is a path to the target
-  public boolean DFS(int source, int pathLength, int target, LinkedList<Edge> adj){
-    if (adj.isEmpty()) return false;
-    //add up node values, currSum carries over to the children calls
-    if (adj.get)
-    pathLength += 1;
-    if (node.left == null && node.right == null){
-        return (currSum == targetSum);
+    int[] topsort = topologicalSort(graph, vertices);
+    Integer[] dist = new Integer[vertices];
+    dist[start] = 0;
+
+    for (int i = 0; i < vertices; i++) {
+
+      int nodeIndex = topsort[i];
+      if (dist[nodeIndex] != null) {
+        List<Edge> adjacentEdges = graph.get(nodeIndex);
+        if (adjacentEdges != null) {
+          for (Edge edge : adjacentEdges) {
+
+            int newDist = dist[nodeIndex] + edge.weight;
+            if (dist[edge.destination] == null) dist[edge.destination] = newDist;
+            else dist[edge.destination] = Math.min(dist[edge.destination], newDist);
+          }
+        }
+      }
     }
-    return (DFS(node.left, currSum, targetSum) || DFS(node.right, currSum, targetSum));
+
+    return dist;
+  }
+
+  //helper dfs for topologicalSort
+  private static int dfs(
+      int i, int at, boolean[] visited, int[] ordering, Map<Integer, List<Edge>> graph) {
+
+    visited[at] = true;
+
+    List<Edge> edges = graph.get(at);
+
+    if (edges != null)
+      for (Edge edge : edges) if (!visited[edge.destination]) i = dfs(i, edge.destination, visited, ordering, graph);
+
+    ordering[i] = at;
+    return i - 1;
+  }
+
+  //sort the nodes!
+  public static int[] topologicalSort(Map<Integer, List<Edge>> graph, int numNodes){
+    int[] ordering = new int[numNodes];
+    boolean[] visited = new boolean[numNodes];
+
+    int i = numNodes - 1;
+    for (int at = 0; at < numNodes; at++)
+      if (!visited[at]) i = dfs(i, at, visited, ordering, graph);
+
+    return ordering;
   }
 }
 
@@ -127,6 +178,6 @@ static class Graph {
   //graph.printGraph(); 
   graph.printAdjacencyMatrix(); 
   graph.printAdjacencyList();
-  //graph.printShortestPaths() // TODO add method to print shortest paths
+  graph.printShortestPaths();
   }
 }
